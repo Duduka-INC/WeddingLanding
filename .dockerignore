@@ -1,0 +1,11 @@
+.venv
+__pycache__
+*.pyc
+.git
+.gitignore
+*.db
+.idea
+*.http
+select_data.py
+Dockerfile
+.dockerignore

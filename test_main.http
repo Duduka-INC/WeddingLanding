@@ -1,0 +1,43 @@
+### RSVP — полный пример (придёт, мясо, напитки)
+POST http://127.0.0.1:8000/api/rsvp
+Content-Type: application/json
+
+{
+  "name": "Иван Петров",
+  "comment": "Будем рады!",
+  "attending": true,
+  "hot_dish": "meat",
+  "drinks": ["Шампанское", "Вино красное"]
+}
+
+### RSVP — не придёт (hot_dish и drinks пустые)
+POST http://127.0.0.1:8000/api/rsvp
+Content-Type: application/json
+
+{
+  "name": "Мария",
+  "attending": false,
+  "drinks": []
+}
+
+### RSVP — рыба, несколько напитков
+POST http://127.0.0.1:8000/api/rsvp
+Content-Type: application/json
+
+{
+  "name": "Алексей",
+  "attending": true,
+  "hot_dish": "fish",
+  "drinks": ["Вино белое", "Безалкогольное"]
+}
+
+### Event — клик/событие (например, с лендинга)
+POST http://127.0.0.1:8000/api/event
+Content-Type: application/json
+
+{
+  "event_name": "button_click",
+  "element_id": "rsvp-btn",
+  "page": "main",
+  "session_id": "test-session-123"
+}

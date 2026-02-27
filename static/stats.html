@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Статистика RSVP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: #050816;
+        color: #e5e7eb;
+      }
+      .stats-root {
+        max-width: 960px;
+        margin: 24px auto;
+        padding: 24px;
+        background: rgba(15, 23, 42, 0.9);
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(148, 163, 184, 0.35);
+      }
+      h1 {
+        margin: 0 0 16px;
+        font-size: 24px;
+        color: #facc15;
+      }
+      h2 {
+        margin: 24px 0 8px;
+        font-size: 18px;
+        color: #e5e7eb;
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+      }
+      .card {
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.45);
+      }
+      .card-title {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #9ca3af;
+        margin-bottom: 6px;
+      }
+      .card-value {
+        font-size: 20px;
+      }
+      .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      table {
+        width: 100%;
+        min-width: 520px;
+        border-collapse: collapse;
+        margin-top: 8px;
+        font-size: 13px;
+      }
+      thead {
+        background: rgba(30, 64, 175, 0.35);
+      }
+      th,
+      td {
+        padding: 6px 8px;
+        border-bottom: 1px solid rgba(55, 65, 81, 0.8);
+        text-align: left;
+        vertical-align: top;
+      }
+      tbody tr:nth-child(odd) {
+        background: rgba(15, 23, 42, 0.7);
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+      }
+      .pill-yes {
+        background: rgba(22, 163, 74, 0.2);
+        color: #4ade80;
+      }
+      .pill-no {
+        background: rgba(239, 68, 68, 0.18);
+        color: #fca5a5;
+      }
+      .pill-meat {
+        background: rgba(248, 113, 113, 0.18);
+        color: #fecaca;
+      }
+      .pill-fish {
+        background: rgba(56, 189, 248, 0.18);
+        color: #a5f3fc;
+      }
+      .drinks-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .drink-pill {
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgba(55, 65, 81, 0.9);
+        font-size: 11px;
+      }
+      .code-label {
+        font-size: 12px;
+        color: #9ca3af;
+        margin-bottom: 8px;
+      }
+      @media (max-width: 640px) {
+        body {
+          font-size: 14px;
+        }
+        .stats-root {
+          margin: 8px;
+          padding: 14px;
+          border-radius: 12px;
+        }
+        h1 {
+          font-size: 20px;
+          line-height: 1.2;
+        }
+        h2 {
+          font-size: 16px;
+        }
+        .stats-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+        .card {
+          padding: 10px 12px;
+        }
+        table {
+          font-size: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stats-root">
+      <div class="code-label">Панель статистики · код доступа: 14012021</div>
+      <h1>Статистика ответов гостей</h1>
+
+      <div id="summary" class="stats-grid"></div>
+
+      <h2>Группировка по напиткам</h2>
+      <div id="drinks"></div>
+
+      <h2>Все ответы</h2>
+      <div id="details-wrapper" class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Имя</th>
+              <th>Присутствие</th>
+              <th>Горячее</th>
+              <th>Напитки</th>
+              <th>Когда</th>
+            </tr>
+          </thead>
+          <tbody id="details"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      async function loadStats() {
+        try {
+          const res = await fetch("/api/stats/14012021");
+          if (!res.ok) {
+            throw new Error("Ошибка загрузки статистики: " + res.status);
+          }
+          const data = await res.json();
+          renderSummary(data);
+          renderDrinks(data.drinks);
+          renderDetails(data.details);
+        } catch (e) {
+          alert(e.message || "Не удалось загрузить статистику");
+        }
+      }
+
+      function renderSummary(data) {
+        const root = document.getElementById("summary");
+        root.innerHTML = "";
+        const cards = [
+          {
+            title: "Всего ответов",
+            value: data.total,
+          },
+          {
+            title: "Придут",
+            value: data.attending.yes,
+          },
+          {
+            title: "Не придут",
+            value: data.attending.no,
+          },
+          {
+            title: "Горячее · мясо",
+            value: data.hot_dish.meat,
+          },
+          {
+            title: "Горячее · рыба",
+            value: data.hot_dish.fish,
+          },
+        ];
+        cards.forEach((c) => {
+          const el = document.createElement("div");
+          el.className = "card";
+          el.innerHTML = `
+            <div class="card-title">${c.title}</div>
+            <div class="card-value">${c.value}</div>
+          `;
+          root.appendChild(el);
+        });
+      }
+
+      function renderDrinks(drinks) {
+        const root = document.getElementById("drinks");
+        root.innerHTML = "";
+        const has = drinks && Object.keys(drinks).length > 0;
+        if (!has) {
+          root.textContent = "Пока никто не выбрал напитки.";
+          return;
+        }
+        const table = document.createElement("table");
+        table.innerHTML = `
+          <thead>
+            <tr><th>Напиток</th><th>Количество</th></tr>
+          </thead>
+          <tbody>
+            ${Object.entries(drinks)
+              .map(
+                ([name, count]) =>
+                  `<tr><td>${name}</td><td>${count}</td></tr>`
+              )
+              .join("")}
+          </tbody>
+        `;
+        root.appendChild(table);
+      }
+
+      function formatDate(iso) {
+        if (!iso) return "";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return iso;
+        return d.toLocaleString("ru-RU", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      function renderDetails(details) {
+        const tbody = document.getElementById("details");
+        tbody.innerHTML = "";
+        details.forEach((r, idx) => {
+          const tr = document.createElement("tr");
+          const drinksHtml =
+            r.drinks && r.drinks.length
+              ? `<div class="drinks-list">${r.drinks
+                  .map((d) => `<span class="drink-pill">${d}</span>`)
+                  .join("")}</div>`
+              : "—";
+          const attendingPill = r.attending
+            ? '<span class="pill pill-yes">Придёт</span>'
+            : '<span class="pill pill-no">Не придёт</span>';
+          let hotPill = "—";
+          if (r.hot_dish === "meat") {
+            hotPill = '<span class="pill pill-meat">Мясо</span>';
+          } else if (r.hot_dish === "fish") {
+            hotPill = '<span class="pill pill-fish">Рыба</span>';
+          }
+          tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td>${r.name}</td>
+            <td>${attendingPill}</td>
+            <td>${hotPill}</td>
+            <td>${drinksHtml}</td>
+            <td>${formatDate(r.created_at)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      loadStats();
+    </script>
+  </body>
+</html>
+
